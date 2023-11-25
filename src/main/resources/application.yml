@@ -1,0 +1,17 @@
+#spring:
+#  docker:
+#    compose:
+#      enabled: true
+
+logging:
+  level:
+    root: info
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  data:
+    mongodb:
+      uri: mongodb://mongodb-node-1,mongodb-node-2,mongodb-node-3/?replicaSet=rs0
+#      database: ${MONGO_DB}
+#      replica-set-name: ${MONGO_REPLICA_SET}
