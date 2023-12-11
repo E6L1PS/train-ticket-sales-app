@@ -1,17 +1,19 @@
 package ru.mai.trainticketsalesapp.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import ru.mai.trainticketsalesapp.exception.NotFoundException;
 import ru.mai.trainticketsalesapp.model.TicketPlace;
 import ru.mai.trainticketsalesapp.model.Train;
+import ru.mai.trainticketsalesapp.model.TrainElastic;
 import ru.mai.trainticketsalesapp.repository.TicketPlaceRepository;
 import ru.mai.trainticketsalesapp.repository.TrainRepository;
+import ru.mai.trainticketsalesapp.repository.TrainSearchRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,9 @@ public class TicketPlaceService {
     private final TicketPlaceRepository ticketPlaceRepository;
 
     private final TrainRepository trainRepository;
+
+    private final TrainSearchRepository trainSearchRepository;
+
 
     public List<TicketPlace> getAll() {
         return ticketPlaceRepository.findAll();
@@ -44,4 +49,16 @@ public class TicketPlaceService {
                 .build());
 
     }
+
+//    public void buyTicket(String ticketId) {
+//        Optional<TrainElastic> train = trainSearchRepository.findByTickets_IdEquals(ticketId);
+//        if (train.isPresent()) {
+//            TrainElastic t = train.get();
+//            t.getTickets().stream().filter(t -> t.getId().equals(ticketId)).findAny()
+//            .getTickets().
+//            trainSearchRepository.save(train)
+//        }
+//        ticketPlaceRepository.updateIsFreePlace(ticketId, false);
+//    }
+
 }

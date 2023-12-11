@@ -2,12 +2,16 @@ package ru.mai.trainticketsalesapp.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import ru.mai.trainticketsalesapp.dto.TrainDto;
 import ru.mai.trainticketsalesapp.mapper.TrainMapper;
 import ru.mai.trainticketsalesapp.model.Train;
+import ru.mai.trainticketsalesapp.model.TrainElastic;
 import ru.mai.trainticketsalesapp.service.TrainService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -18,9 +22,39 @@ public class TrainController {
     private final TrainService trainService;
     private final TrainMapper trainMapper;
 
+    @GetMapping("/s")
+    public Page<TrainElastic> searchTrains(
+            @RequestParam String departureStation,
+            @RequestParam String destinationStation,
+            @RequestParam(required = false, defaultValue = "2023") Integer departureDateYear,
+            @RequestParam Integer departureDateMonth,
+            @RequestParam Integer departureDateDay,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        return trainService.searchTrainsByDateAndStations(
+                departureStation,
+                destinationStation,
+                LocalDate.of(
+                        departureDateYear,
+                        departureDateMonth,
+                        departureDateDay
+                ),
+                PageRequest.of(page, size));
+    }
+
+    @GetMapping("/s/date")
+    public List<TrainElastic> searchTrains(
+            @RequestParam(required = false) String departureDate,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        return trainService.search(departureDate, PageRequest.of(page, size));
+    }
+
     @GetMapping
-    public List<TrainDto> getTrains() {
-        return trainMapper.toDTO(trainService.getAll());
+    public Iterable<TrainElastic> getTrains() {
+        return trainService.findAll();
     }
 
     @PostMapping

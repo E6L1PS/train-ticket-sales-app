@@ -6,31 +6,34 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.LocalDate;
 import java.util.List;
 
-
-@Document(collection = "trains")
+@Document(indexName = "trains")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Train {
+public class TrainElastic {
     @Id
+    @Field(type = FieldType.Keyword)
     private String id;
 
+    @Field(type = FieldType.Integer, name = "place_count")
     private Integer placeCount;
 
+    @Field(type = FieldType.Date, name = "departure_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate departureDate;
 
-    @DBRef(lazy = true)
+    @Field(type = FieldType.Nested)
     private Route route;
 
-    @DBRef(lazy = true)
+    @Field(type = FieldType.Nested)
     private List<TicketPlace> tickets;
 
 }

@@ -1,6 +1,5 @@
 package ru.mai.trainticketsalesapp.repository;
 
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,4 +12,8 @@ import java.util.List;
 public interface TicketPlaceRepository extends MongoRepository<TicketPlace, String> {
     @Query("{'train':  ?0}")
     List<TicketPlace> findAllByTrain(Train train);
+
+
+    @Query("{'id': ?0}")
+    void updateIsFreePlace(String ticketId, boolean isFreePlace);
 }

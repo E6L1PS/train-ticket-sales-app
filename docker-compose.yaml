@@ -1,0 +1,135 @@
+version: '3.8'
+
+x-mongodb-healthcheck: &mongodb-healthcheck
+  healthcheck:
+    test: echo 'db.runCommand("ping").ok' | mongosh 127.0.0.1:27017/test --quiet
+    interval: 10s
+    timeout: 10s
+    retries: 5
+    start_period: 40s
+
+x-elasticsearch-healthcheck: &elasticsearch-healthcheck
+  healthcheck:
+    interval: 5s
+    retries: 80
+    test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
+
+services:
+  api:
+    image: 'api:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mongodb-node-1
+      - mongodb-node-2
+      - mongodb-node-3
+      - elasticsearch-node-1
+      - elasticsearch-node-2
+      - elasticsearch-node-3
+
+
+  ### ElasticSearch Cluster:
+
+  elasticsearch-node-1:
+    image: 'elasticsearch:8.10.2'
+    container_name: elasticsearch-node-1
+    <<: [ *elasticsearch-healthcheck ]
+    environment:
+      - node.name=elasticsearch-node-1
+      - discovery.seed_hosts=elasticsearch-node-2,elasticsearch-node-3
+    ports:
+      - '9201:9200'
+    env_file:
+      - infrastructure/elasticsearch.env
+    volumes:
+      - ./data/elasticsearch-node-1:/usr/share/elasticsearch/data
+
+  elasticsearch-node-2:
+    image: 'elasticsearch:8.10.2'
+    container_name: elasticsearch-node-2
+    <<: [ *elasticsearch-healthcheck ]
+    environment:
+      - node.name=elasticsearch-node-2
+      - discovery.seed_hosts=elasticsearch-node-1,elasticsearch-node-3
+    ports:
+      - '9202:9200'
+    env_file:
+      - infrastructure/elasticsearch.env
+    volumes:
+      - ./data/elasticsearch-node-2:/usr/share/elasticsearch/data
+
+  elasticsearch-node-3:
+    image: 'elasticsearch:8.10.2'
+    container_name: elasticsearch-node-3
+    <<: [ *elasticsearch-healthcheck ]
+    environment:
+      - node.name=elasticsearch-node-3
+      - discovery.seed_hosts=elasticsearch-node-1,elasticsearch-node-2
+    ports:
+      - '9203:9200'
+    env_file:
+      - infrastructure/elasticsearch.env
+    volumes:
+      - ./data/elasticsearch-node-3:/usr/share/elasticsearch/data
+
+
+
+
+  ### MongoDB Cluster:
+
+  mongodb-node-1:
+    container_name: mongodb-node-1
+    image: 'mongo:latest'
+    <<: [ *mongodb-healthcheck ]
+    command: mongod --replSet rs0
+    ports:
+      - '27018:27017'
+    volumes:
+      - ./data/mongodb-node-1-data:/data/db
+  mongodb-node-2:
+    container_name: mongodb-node-2
+    image: 'mongo:latest'
+    <<: [ *mongodb-healthcheck ]
+    command: mongod --replSet rs0
+    ports:
+      - '27019:27017'
+    volumes:
+      - ./data/mongodb-node-2-data:/data/db
+  mongodb-node-3:
+    container_name: mongodb-node-3
+    image: 'mongo:latest'
+    <<: [ *mongodb-healthcheck ]
+    command: mongod --replSet rs0
+    ports:
+      - '27020:27017'
+    volumes:
+      - ./data/mongodb-node-3-data:/data/db
+
+  mongo-cluster-init:
+    image: 'mongo:latest'
+    depends_on:
+      mongodb-node-1:
+        condition: service_healthy
+      mongodb-node-2:
+        condition: service_healthy
+      mongodb-node-3:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/init-replica-set.js:/scripts/init-replica-set.js:ro
+    entrypoint: [ "mongosh", "--host", "mongodb-node-1", "--file", "/scripts/init-replica-set.js" ]
+
+
+  #  admin-mongo:
+  #    image: 'mrvautin/adminmongo'
+  #    ports:
+  #      - '1234:1234'
+
+#  mongo-express:
+#    image: mongo-express:1.0.0-20-alpine3.18
+#    ports:
+#      - 8081:8081
+#    environment:
+#      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
