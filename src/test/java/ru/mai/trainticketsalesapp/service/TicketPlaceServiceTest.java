@@ -91,7 +91,7 @@ class TicketPlaceServiceTest {
     @Test
     void getTicketsByTrainId_ShouldReturnListTicketsByTrainId() {
         Mockito.when(
-                trainRepository.findById(Mockito.any(ObjectId.class))
+                trainRepository.findById(Mockito.any(String.class))
         ).thenReturn(
                 trains.stream().filter(train -> train.getId().equals("0")).findFirst()
         );
@@ -110,7 +110,7 @@ class TicketPlaceServiceTest {
     @Test
     void getTicketsByTrainId_ShouldReturnNotFoundException() {
         Mockito.when(
-                trainRepository.findById(Mockito.any(ObjectId.class))
+                trainRepository.findById(Mockito.any(String.class))
         ).thenReturn(
                 Optional.empty()
         );

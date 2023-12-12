@@ -1,10 +1,10 @@
 package ru.mai.trainticketsalesapp.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
+import ru.mai.trainticketsalesapp.dto.CountTrains;
 import ru.mai.trainticketsalesapp.dto.TrainDto;
 import ru.mai.trainticketsalesapp.mapper.TrainMapper;
 import ru.mai.trainticketsalesapp.model.Train;
@@ -53,13 +53,30 @@ public class TrainController {
     }
 
     @GetMapping
-    public Iterable<TrainElastic> getTrains() {
-        return trainService.findAll();
+    public Page<TrainElastic> getTrains(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        return trainService.findAll(PageRequest.of(page, size));
+    }
+
+    @GetMapping("/count")
+    public CountTrains getCountTrains() {
+        return CountTrains.builder()
+                .mongo(trainService.countTrains())
+                .elastic(trainService.countTrainsElastic())
+                .build();
     }
 
     @PostMapping
     public Train addTrain(@RequestBody TrainDto trainDto) {
         return trainService.createTrain(trainDto);
+    }
+
+
+    @PostMapping("/generate/{numberTrains}")
+    public void generateTrains(@PathVariable Long numberTrains) {
+        trainService.generateAndSaveTrains(numberTrains);
     }
 
     @PutMapping
@@ -68,8 +85,13 @@ public class TrainController {
     }
 
     @DeleteMapping
-    public void deleteTrain(@RequestBody ObjectId id) {
+    public void deleteTrain(@RequestBody String id) {
         trainService.deleteTrain(id);
+    }
+
+    @DeleteMapping("/all")
+    public void deleteAll() {
+        trainService.deleteAll();
     }
 
 }

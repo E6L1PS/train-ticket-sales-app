@@ -8,6 +8,7 @@ import ru.mai.trainticketsalesapp.model.Train;
 
 @Repository
 public interface TrainRepository extends MongoRepository<Train, String> {
+    long countById(String id);
 
     @Query("{'tickets.id': ?0}")
     Train findByTicketId(String ticketId);
