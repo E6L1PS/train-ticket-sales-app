@@ -1,6 +1,7 @@
 package ru.mai.trainticketsalesapp.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ru.mai.trainticketsalesapp.exception.NotFoundException;
 import ru.mai.trainticketsalesapp.model.TicketPlace;

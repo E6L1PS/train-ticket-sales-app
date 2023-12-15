@@ -2,6 +2,7 @@ logging:
   level:
     root: info
 
+
 spring:
   config:
     import: optional:file:.env[.properties]
@@ -10,3 +11,6 @@ spring:
   data:
     mongodb:
       uri: mongodb://mongodb-node-1,mongodb-node-2,mongodb-node-3/traintickets
+    redis:
+      cluster:
+        nodes: redis-node-1:6379,redis-node-2:6379,redis-node-3:6379

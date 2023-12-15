@@ -29,6 +29,9 @@ services:
       - elasticsearch-node-1
       - elasticsearch-node-2
       - elasticsearch-node-3
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
 
 
   ### ElasticSearch Cluster:
@@ -107,6 +110,34 @@ services:
       - '27020:27017'
     volumes:
       - ./data/mongodb-node-3-data:/data/db
+
+  redis-node-1:
+    image: 'redis:latest'
+    container_name: redis-node-1
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6380:6379'
+
+  redis-node-2:
+    image: 'redis:latest'
+    container_name: redis-node-2
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6381:6379'
+
+  redis-node-3:
+    image: 'redis:latest'
+    container_name: redis-node-3
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6382:6379'
+
 
   mongo-cluster-init:
     image: 'mongo:latest'
