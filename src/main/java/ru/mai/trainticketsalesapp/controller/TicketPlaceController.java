@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.mai.trainticketsalesapp.model.TicketPlace;
 import ru.mai.trainticketsalesapp.service.TicketPlaceService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -34,10 +35,14 @@ public class TicketPlaceController {
     }
 
 
-    @PutMapping("/{id}")
+    @PutMapping("/buy/{id}")
     public void buyTicket(@PathVariable String id) {
-       // ticketPlaceService.buyTicket(id);
+        ticketPlaceService.buyTicket(id);
     }
 
+    @PutMapping("/pay/{id}")
+    public boolean payTicket(@PathVariable String id, @RequestParam BigDecimal money) {
+        return ticketPlaceService.payTicket(id, money);
+    }
 
 }

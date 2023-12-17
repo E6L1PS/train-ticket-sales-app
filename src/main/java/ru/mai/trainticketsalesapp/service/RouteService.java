@@ -3,6 +3,7 @@ package ru.mai.trainticketsalesapp.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import ru.mai.trainticketsalesapp.exception.NotFoundException;
 import ru.mai.trainticketsalesapp.model.Route;
 import ru.mai.trainticketsalesapp.model.Station;
 import ru.mai.trainticketsalesapp.repository.RouteRepository;
@@ -36,4 +37,8 @@ public class RouteService {
     }
 
 
+    @Cacheable(key = "#id", value = "route")
+    public Route getById(String id) {
+        return routeRepository.findById(id).orElseThrow(() -> new NotFoundException("Route by id:" + id + " not found"));
+    }
 }

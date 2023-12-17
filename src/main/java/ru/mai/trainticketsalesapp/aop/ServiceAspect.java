@@ -1,6 +1,7 @@
 package ru.mai.trainticketsalesapp.aop;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -19,9 +20,10 @@ public class ServiceAspect {
     public void anyServicePublicMethod() {
     }
 
-    @Before("anyServicePublicMethod()" +
-            "&& target(service)")
-    public void addLogging(Object service) {
-        log.info("Service method called: {}", service.getClass().getName());
+    @Before("anyServicePublicMethod()")
+    public void addLogging(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getTarget().getClass().getName();
+        log.info("Service method called: {}.{}", className, methodName);
     }
 }

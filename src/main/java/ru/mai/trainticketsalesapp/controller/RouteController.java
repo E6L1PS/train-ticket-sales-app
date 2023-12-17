@@ -1,5 +1,6 @@
 package ru.mai.trainticketsalesapp.controller;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,10 @@ public class RouteController {
     @GetMapping
     public List<Route> getAll() {
         return routeService.getAll();
+    }
+    @GetMapping("/{id}")
+    public Route getRoute(@PathVariable String id) {
+        return routeService.getById(id);
     }
 
     @PostMapping

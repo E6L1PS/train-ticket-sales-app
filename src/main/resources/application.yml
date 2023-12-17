@@ -2,6 +2,9 @@ logging:
   level:
     root: info
 
+springdoc:
+  swagger-ui:
+    operations-sorter: method
 
 spring:
   config:
