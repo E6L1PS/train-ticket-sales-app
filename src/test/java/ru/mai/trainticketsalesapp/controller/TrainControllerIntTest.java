@@ -17,16 +17,12 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import ru.mai.trainticketsalesapp.model.Route;
-import ru.mai.trainticketsalesapp.model.Station;
-import ru.mai.trainticketsalesapp.repository.RouteRepository;
-
-import java.util.List;
+import ru.mai.trainticketsalesapp.repository.StationRepository;
 
 @Testcontainers
 @TestConfiguration(proxyBeanMethods = false)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class RouteControllerIT {
+public class TrainControllerIntTest {
 
     @LocalServerPort
     private Integer port;
@@ -47,12 +43,12 @@ public class RouteControllerIT {
                     .withEnv("http.cors.enabled", "true")
                     .withEnv("ES_JAVA_OPTS", "-Xmx256m -Xms256m");
     @Autowired
-    RouteRepository routeRepository;
+    StationRepository stationRepository;
 
     @BeforeEach
     void setup() {
         RestAssured.baseURI = "http://localhost:" + port;
-        routeRepository.deleteAll();
+        stationRepository.deleteAll();
     }
 
 
@@ -61,75 +57,29 @@ public class RouteControllerIT {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/v1/route")
+                .get("/api/v1/station")
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("content", Matchers.hasSize(0));
-
-    }
-
-    @Test
-    public void testNotEmptyGetAll() {
-        List<Station> stations = List.of(
-                Station.builder().name("A").build(),
-                Station.builder().name("B").build()
-        );
-        List<Route> routes = List.of(
-                Route.builder()
-                        .stations(stations)
-                        .numberRoute("#1")
-                        .build(),
-                Route.builder()
-                        .stations(stations)
-                        .numberRoute("#2")
-                        .build()
-        );
-        routeRepository.saveAll(routes);
-
-        RestAssured.given()
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/api/v1/route")
-                .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("content", Matchers.hasSize(2));
-    }
-
-    @Test
-    public void testEmptyGetById() {
-        String id = "test";
-
-        RestAssured.given()
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/api/v1/route/{id}", id)
-                .then()
-                .statusCode(HttpStatus.NOT_FOUND.value());
     }
 
 //    @Test
-//    public void testNotEmptyGetById() throws JsonProcessingException {
+//    public void testNotEmptyGetAll() {
 //        List<Station> stations = List.of(
 //                Station.builder().name("A").build(),
 //                Station.builder().name("B").build()
 //        );
-//        Route route = routeRepository.save(Route.builder()
-//                .stations(stations)
-//                .numberRoute("#1")
-//                .build());
+//        stationRepository.saveAll(stations);
 //
 //        RestAssured.given()
 //                .contentType(ContentType.JSON)
 //                .when()
-//                .get("/api/v1/route/{id}", route.getId())
+//                .get("/api/v1/route")
 //                .then()
 //                .statusCode(HttpStatus.OK.value())
-//                .body(Matchers.contains(
-//                        new ObjectMapper()
-//                                .writer()
-//                                .withDefaultPrettyPrinter()
-//                                .writeValueAsString(route)));
+//                .body("content", Matchers.hasSize(2));
 //    }
+
 
 }
 
