@@ -61,6 +61,9 @@ jacocoTestReport {
     }
 }
 
+check.dependsOn jacocoTestReport
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
+
 dependencies {
     //Generate fake data
     implementation 'com.github.javafaker:javafaker:1.0.2'
