@@ -19,7 +19,6 @@ public class RouteService {
     private final StationRepository stationRepository;
     private final RouteRepository routeRepository;
 
-    @Cacheable("routes")
     public Page<Route> getAll(PageRequest pageRequest) {
         return routeRepository.findAll(pageRequest);
     }
