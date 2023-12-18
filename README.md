@@ -43,3 +43,13 @@
 
 ## Архитектура кластера:
 ![architecture.svg](src/main/resources/architecture.svg)
+
+## Сценарии отказов узлов кластера
+| Действие                                                                                                                  | Результат | Почему                                                                                             |
+|---------------------------------------------------------------------------------------------------------------------------|-----------|----------------------------------------------------------------------------------------------------|
+| Отключение<br/> redis-node-1 or<br/> redis-node-2 or<br/> redis-node-3                                                    | ok        | Есть реплика на<br/> redis-node-4,<br/> redis-node-5,<br/> redis-node-6                            |
+| Отключение<br/> redis-node-1 and redis-node-4 or<br/> redis-node-2 and redis-node-5 or<br/> redis-node-3 and redis-node-6 | fail      | Невозможность подключения<br/> к сегменту кэша, в котором<br/> мастер и его реплика вышли из строя |
+| Отключение<br/> mongodb-node-1 nand<br/> mongodb-node-2 nand<br/> mongodb-node-3                                          | ok        | При отключении primary узла,<br/> один из secondary узлов становится primary                       |
+| Отключение<br/> mongodb-node-1 and<br/> mongodb-node-2 and<br/> mongodb-node-3                                            | fail      | Невозможность подключения к primary узлу,<br/> так как все узлы вышли из строя                     |
+| Отключение<br/> elasticsearch-node-1 nand<br/> elasticsearch-node-2 nand<br/> elasticsearch-node-3                        | ok        | При отключении к мастер ноду,<br/> одна из реплик становится мастером                              |
+| Отключение<br/> elasticsearch-node-1 and<br/> elasticsearch-node-2 and<br/> elasticsearch-node-3                          | fail      | Невозможность подключения к мастер ноду,<br/> так как все ноды вышли из строя                      |

@@ -29,6 +29,7 @@ repositories {
 }
 
 dependencies {
+    //Generate fake data
     implementation 'com.github.javafaker:javafaker:1.0.2'
 
     //Starters
@@ -51,6 +52,9 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.testcontainers:mongodb:1.19.3"
+    testImplementation "org.testcontainers:elasticsearch:1.19.3"
+
 }
 
 tasks.named('test') {

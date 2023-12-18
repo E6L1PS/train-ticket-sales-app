@@ -2,6 +2,8 @@ package ru.mai.trainticketsalesapp.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.mai.trainticketsalesapp.exception.NotFoundException;
@@ -35,15 +37,12 @@ public class TicketPlaceService {
     private final RedisTemplate<String, Object> redisTemplate;
 
 
-    public List<TicketPlace> getAll() {
-        return ticketPlaceRepository.findAll();
+    public Page<TicketPlace> getAll(PageRequest pageRequest) {
+        return ticketPlaceRepository.findAll(pageRequest);
     }
 
     public TicketPlace getById(String ticketId) {
-
-        Optional<TicketPlace> ticket = ticketPlaceRepository.findById(ticketId);
-
-        return ticket.orElse(null);
+        return ticketPlaceRepository.findById(ticketId).orElseThrow(() -> new NotFoundException("Ticket " + ticketId + " not found"));
     }
 
     public List<TicketPlace> getTicketsByTrainId(String trainId) {
@@ -58,18 +57,6 @@ public class TicketPlaceService {
                 .build());
 
     }
-
-//    public void buyTicket(String ticketId) {
-//        Optional<TrainElastic> train = trainSearchRepository.findByTickets_IdEquals(ticketId);
-//        if (train.isPresent()) {
-//            TrainElastic t = train.get();
-//            t.getTickets().stream().filter(t -> t.getId().equals(ticketId)).findAny()
-//            .getTickets().
-//            trainSearchRepository.save(train)
-//        }
-//        ticketPlaceRepository.updateIsFreePlace(ticketId, false);
-//    }
-
 
     public void buyTicket(String ticketId) {
         String lockKey = LOCK_PREFIX + ticketId;
@@ -121,32 +108,6 @@ public class TicketPlaceService {
             }
         }
     }
-//
-//
-//    public boolean buyTicket(String ticketId) {
-//        String lockKey = LOCK_PREFIX + ticketId;
-//
-//        try {
-//            Boolean isLocked = redisTemplate.opsForValue().setIfAbsent(lockKey, true, LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-//
-//            if (isLocked != null && isLocked) {
-//                // Получение информации о билете
-//                TicketPlace ticketPlace = ticketPlaceRepository.findById(ticketId).orElse(null);
-//
-//                if (ticketPlace != null && ticketPlace.getIsFreePlace()) {
-//                    // Место свободно, помечаем его как купленное
-//                    ticketPlace.setIsFreePlace(false);
-//                    ticketPlaceRepository.save(ticketPlace);
-//
-//                    return true;
-//                }
-//            }
-//        } finally {
-//            unlockTicket(ticketId);
-//        }
-//
-//        return false;
-//    }
 
     private void unlockTicket(String ticketId) {
         String lockKey = LOCK_PREFIX + ticketId;

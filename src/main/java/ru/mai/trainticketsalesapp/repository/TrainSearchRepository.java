@@ -11,27 +11,32 @@ import ru.mai.trainticketsalesapp.model.TrainElastic;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TrainSearchRepository extends ElasticsearchRepository<TrainElastic, String> {
+
     Optional<TrainElastic> findByTickets_IdEquals(@NonNull String id);
+
     Page<TrainElastic> findByRoute_Stations_NameEqualsIgnoreCaseAndRoute_Stations_NameEqualsIgnoreCaseAndDepartureDateEqualsAndTickets_IsFreePlaceTrue(
             @NonNull String name,
             @NonNull String name1,
             @NonNull LocalDate departureDate,
             Pageable pageable);
+
     Page<TrainElastic> findByRoute_Stations_NameEqualsIgnoreCaseAndRoute_Stations_NameEqualsIgnoreCaseAndDepartureDateEquals(@NonNull String name, @NonNull String name1, @NonNull LocalDate departureDate, Pageable pageable);
+
     Page<TrainElastic> findByRoute_Stations_NameInIgnoreCaseAndRoute_Stations_NameInIgnoreCaseAndDepartureDateEquals(
             @NonNull String name,
             @NonNull Collection<String> names,
             @NonNull LocalDate departureDate,
             Pageable pageable
     );
+
     Page<TrainElastic> findByDepartureDateEqualsAndRoute_Stations_NameIn(@NonNull LocalDate departureDate,
                                                                          @NonNull Collection<String> names,
                                                                          Pageable pageable);
+
     Page<TrainElastic> findByDepartureDateEquals(@NonNull LocalDate departureDate, PageRequest pageRequest);
 
     @Query("{\"bool\": {\"must\": [" +

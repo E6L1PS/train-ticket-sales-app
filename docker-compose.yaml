@@ -1,37 +1,87 @@
 version: '3.8'
 
+x-api-config: &api-config
+  build: .
+  depends_on:
+    mongo-cluster-init:
+      condition: service_completed_successfully
+    elasticsearch-node-1:
+      condition: service_healthy
+    elasticsearch-node-2:
+      condition: service_healthy
+    elasticsearch-node-3:
+      condition: service_healthy
+    redis-node-1:
+      condition: service_healthy
+    redis-node-2:
+      condition: service_healthy
+    redis-node-3:
+      condition: service_healthy
+    redis-node-4:
+      condition: service_healthy
+    redis-node-5:
+      condition: service_healthy
+    redis-node-6:
+      condition: service_healthy
+
 x-mongodb-healthcheck: &mongodb-healthcheck
   healthcheck:
-    test: echo 'db.runCommand("ping").ok' | mongosh 127.0.0.1:27017/test --quiet
-    interval: 10s
+    interval: 5s
     timeout: 10s
-    retries: 5
-    start_period: 40s
+    retries: 10
+    test: echo 'db.runCommand("ping").ok' | mongosh 127.0.0.1:27017/test --quiet
 
 x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   healthcheck:
     interval: 5s
-    retries: 80
+    timeout: 10s
+    retries: 10
     test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://127.0.0.1:9200
 
+x-redis-healthcheck: &redis-healthcheck
+  healthcheck:
+    interval: 5s
+    timeout: 10s
+    retries: 10
+    test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+
 services:
-  api:
-    image: 'api:latest'
-    build:
-      context: .
-      dockerfile: Dockerfile
+
+
+
+
+  ### Load balancing:
+
+  nginx:
+    image: nginx
+    container_name: nginx
     ports:
-      - '8080:8080'
+      - 81:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - mongodb-node-1
-      - mongodb-node-2
-      - mongodb-node-3
-      - elasticsearch-node-1
-      - elasticsearch-node-2
-      - elasticsearch-node-3
-      - redis-node-1
-      - redis-node-2
-      - redis-node-3
+      - api-node-1
+      - api-node-2
+      - api-node-3
+
+
+
+
+  ### API Cluster:
+
+  api-node-1:
+    container_name: api-node-1
+    <<: [ *api-config ]
+
+  api-node-2:
+    container_name: api-node-2
+    <<: [ *api-config ]
+
+  api-node-3:
+    container_name: api-node-3
+    <<: [ *api-config ]
+
+
 
 
   ### ElasticSearch Cluster:
@@ -84,8 +134,8 @@ services:
   ### MongoDB Cluster:
 
   mongodb-node-1:
-    container_name: mongodb-node-1
     image: 'mongo:latest'
+    container_name: mongodb-node-1
     <<: [ *mongodb-healthcheck ]
     command: mongod --replSet rs0
     ports:
@@ -94,8 +144,8 @@ services:
       - ./data/mongodb-node-1-data:/data/db
 
   mongodb-node-2:
-    container_name: mongodb-node-2
     image: 'mongo:latest'
+    container_name: mongodb-node-2
     <<: [ *mongodb-healthcheck ]
     command: mongod --replSet rs0
     ports:
@@ -104,8 +154,8 @@ services:
       - ./data/mongodb-node-2-data:/data/db
 
   mongodb-node-3:
-    container_name: mongodb-node-3
     image: 'mongo:latest'
+    container_name: mongodb-node-3
     <<: [ *mongodb-healthcheck ]
     command: mongod --replSet rs0
     ports:
@@ -121,6 +171,7 @@ services:
   redis-node-1:
     image: 'redis:latest'
     container_name: redis-node-1
+    <<: [ *redis-healthcheck ]
     command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     volumes:
       - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
@@ -130,6 +181,7 @@ services:
   redis-node-2:
     image: 'redis:latest'
     container_name: redis-node-2
+    <<: [ *redis-healthcheck ]
     command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     volumes:
       - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
@@ -139,12 +191,42 @@ services:
   redis-node-3:
     image: 'redis:latest'
     container_name: redis-node-3
+    <<: [ *redis-healthcheck ]
     command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     volumes:
       - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - '6382:6379'
 
+  redis-node-4:
+    image: 'redis:latest'
+    container_name: redis-node-4
+    <<: [ *redis-healthcheck ]
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6383:6379'
+
+  redis-node-5:
+    image: 'redis:latest'
+    container_name: redis-node-5
+    <<: [ *redis-healthcheck ]
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6384:6379'
+
+  redis-node-6:
+    image: 'redis:latest'
+    container_name: redis-node-6
+    <<: [ *redis-healthcheck ]
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - ./infrastructure/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - '6385:6379'
 
   mongo-cluster-init:
     image: 'mongo:latest'
@@ -158,6 +240,11 @@ services:
     volumes:
       - ./infrastructure/init-replica-set.js:/scripts/init-replica-set.js:ro
     entrypoint: [ "mongosh", "--host", "mongodb-node-1", "--file", "/scripts/init-replica-set.js" ]
+
+
+
+
+
 
 
   #  admin-mongo:

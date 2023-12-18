@@ -16,4 +16,4 @@ spring:
       uri: mongodb://mongodb-node-1,mongodb-node-2,mongodb-node-3/traintickets
     redis:
       cluster:
-        nodes: redis-node-1:6379,redis-node-2:6379,redis-node-3:6379
+        nodes: redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379,redis-node-6:6379

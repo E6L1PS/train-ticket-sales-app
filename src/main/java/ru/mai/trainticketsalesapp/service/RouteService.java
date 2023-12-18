@@ -2,6 +2,8 @@ package ru.mai.trainticketsalesapp.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.mai.trainticketsalesapp.exception.NotFoundException;
 import ru.mai.trainticketsalesapp.model.Route;
@@ -18,12 +20,12 @@ public class RouteService {
     private final RouteRepository routeRepository;
 
     @Cacheable("routes")
-    public List<Route> getAll() {
-        return routeRepository.findAll();
+    public Page<Route> getAll(PageRequest pageRequest) {
+        return routeRepository.findAll(pageRequest);
     }
 
-    public List<Station> getAllStation() {
-        return stationRepository.findAll();
+    public Page<Station> getAllStation(PageRequest pageRequest) {
+        return stationRepository.findAll(pageRequest);
     }
 
     public Station createStation(Station stationDto) {

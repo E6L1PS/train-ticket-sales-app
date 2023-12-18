@@ -73,7 +73,6 @@ public class TrainController {
         return trainService.createTrain(trainDto);
     }
 
-
     @PostMapping("/generate/{numberTrains}")
     public void generateTrains(@PathVariable Long numberTrains) {
         trainService.generateAndSaveTrains(numberTrains);
