@@ -4,7 +4,6 @@ import com.redis.testcontainers.RedisContainer;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,6 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import ru.mai.trainticketsalesapp.dto.TrainDto;
 import ru.mai.trainticketsalesapp.model.*;
 import ru.mai.trainticketsalesapp.repository.RouteRepository;
 import ru.mai.trainticketsalesapp.repository.TicketPlaceRepository;
@@ -34,10 +32,11 @@ import java.util.stream.IntStream;
 @Testcontainers
 @TestConfiguration(proxyBeanMethods = false)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TrainControllerIntTest {
+public class TicketPlaceControllerIntTest {
 
     @LocalServerPort
     private Integer port;
+
 
     @Container
     @ServiceConnection
@@ -69,19 +68,18 @@ public class TrainControllerIntTest {
     List<Station> stations;
     Route route;
     Train train;
-
-    TrainDto trainDto;
     List<Train> trains;
 
     @BeforeEach
     void setup() {
-        tickets = IntStream.range(1, 21).mapToObj(
+        tickets = IntStream.range(1, 26).mapToObj(
                 i -> TicketPlace.builder()
                         .price(BigDecimal.valueOf(4500))
                         .isFreePlace(true)
                         .place(i)
                         .build()
         ).collect(Collectors.toList());
+
 
         stations = List.of(
                 Station.builder().name("A").build(),
@@ -100,18 +98,11 @@ public class TrainControllerIntTest {
                 .placeCount(3)
                 .build();
 
-        trainDto = TrainDto.builder()
-                .route(route)
-                .placeCount(20)
-                .priceForPlace(BigDecimal.valueOf(5000))
-                .departureDate(LocalDate.now())
-                .build();
-
         trains = List.of(
                 train,
                 train
         );
-        String endPoint = "/api/v1/train";
+        String endPoint = "/api/v1/ticket";
         RestAssured.baseURI = "http://localhost:" + port + endPoint;
         trainRepository.deleteAll();
         ticketPlaceRepository.deleteAll();
@@ -134,15 +125,7 @@ public class TrainControllerIntTest {
     @Test
     public void testNotEmptyGetAll() {
         List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
-        Route routeByRepo = routeRepository.save(route);
-        trainSearchRepository.saveAll(List.of(
-                TrainElastic.builder()
-                        .tickets(ticketsByRepo)
-                        .route(routeByRepo)
-                        .placeCount(20)
-                        .departureDate(LocalDate.now())
-                        .build()
-        ));
+        int size = ticketsByRepo.size();
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
@@ -150,98 +133,178 @@ public class TrainControllerIntTest {
                 .get()
                 .then()
                 .statusCode(HttpStatus.OK.value())
-                .body("content", Matchers.hasSize(1));
+                .body("content", Matchers.hasSize(size >= 5 ? 5 : size % 5));
     }
 
     @Test
-    public void testNotEmptySearch() {
-        TrainElastic trainElastic = TrainElastic.builder()
-                .tickets(tickets)
-                .route(route)
-                .departureDate(LocalDate.now())
-                .build();
-        trainSearchRepository.save(trainElastic);
+    public void testEmptyGetById() {
+        String id = "test";
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .param("departureStation", "A")
-                .param("destinationStation", "B")
-                .param("departureDateMonth", 12)
-                .param("departureDateDay", 19)
                 .when()
-                .get("/s")
+                .get("/{id}", id)
                 .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("content", Matchers.hasSize(1));
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("not found"));
     }
 
+    @Test
+    public void testNotEmptyGetById() {
+        TicketPlace ticketByRepo = ticketPlaceRepository.save(tickets.get(0));
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/{id}", ticketByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", Matchers.equalTo(ticketByRepo.getId()))
+                .body("place", Matchers.equalTo(ticketByRepo.getPlace()))
+                //  .body("price", Matchers.equalTo(ticketByRepo.getPrice()))
+                .body("isFreePlace", Matchers.equalTo(ticketByRepo.getIsFreePlace()));
+    }
+
+    @Test
+    public void testEmptyGetByTrainId() {
+        String id = "test";
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/train/{id}", id)
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("not found"));
+    }
+
+
+//    @Test
+//    public void testNotEmptyGetByTrainId() {
+//        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
+//        Train trainByRepo = trainRepository.save(Train.builder().tickets(ticketsByRepo).build());
+//
+//        RestAssured.given()
+//                .contentType(ContentType.JSON)
+//                .when()
+//                .get("/{id}", trainByRepo.getId())
+//                .then()
+//                .statusCode(HttpStatus.OK.value())
+//                .body("content", Matchers.hasSize(ticketsByRepo.size()));
+//    }
 
     @Test
     public void testCreate() {
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(trainDto)
+                .body(tickets.get(0))
                 .when()
                 .post()
                 .then()
                 .statusCode(HttpStatus.CREATED.value())
-                .body("id", Matchers.notNullValue())
-                .body("tickets", Matchers.hasSize(trainDto.getPlaceCount()));
+                .body("id", Matchers.notNullValue());
     }
 
     @Test
-    public void testGenerateTrains() {
-        long countTrains = 5;
-
+    public void testEmptyBuyById() {
+        String id = "test";
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(trainDto)
                 .when()
-                .post("/generate/{numberTrains}", countTrains)
+                .put("/buy/{id}", id)
                 .then()
-                .statusCode(HttpStatus.CREATED.value());
-
-        long countTrainsByRepo = trainRepository.count();
-        long countTrainsByElasticRepo = trainSearchRepository.count();
-        Assertions.assertEquals(countTrainsByRepo, countTrainsByElasticRepo, countTrains);
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("not found"));
     }
 
     @Test
-    public void testUpdate() {
+    public void testNotEmptyBuyById() {
+        TicketPlace ticketByRepo = ticketPlaceRepository.insert(tickets.get(0));
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(trainDto)
                 .when()
-                .put()
+                .put("/buy/{id}", ticketByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+    }
+
+    @Test
+    public void testNotEmptyAndSoldTicketBuyById() {
+        TicketPlace ticketByRepo = ticketPlaceRepository.insert(TicketPlace.builder().isFreePlace(false).build());
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/buy/{id}", ticketByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("Ticket sold"));
+    }
+
+    @Test
+    public void testBuyLocked() {
+        TicketPlace ticketByRepo = ticketPlaceRepository.insert(tickets.get(0));
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/buy/{id}", ticketByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/buy/{id}", ticketByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("Ticket locked"));
+    }
+
+    @Test
+    public void testPayFail() {
+//        TicketPlace ticketByRepo = ticketPlaceRepository.insert(tickets.get(0));
+        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
+        Train train = Train.builder().tickets(ticketsByRepo).build();
+        TrainElastic trainElastic = TrainElastic.builder().tickets(ticketsByRepo).build();
+        Train trainByRepo = trainRepository.save(train);
+        TrainElastic trainElasticRepo = trainSearchRepository.save(trainElastic);
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(tickets.get(0))
+                .param("money", 5000.0)
+                .when()
+                .put("/pay/{id}", ticketsByRepo.get(0).getId())
                 .then()
                 .statusCode(HttpStatus.CREATED.value())
-                .body("id", Matchers.notNullValue())
-                .body("tickets", Matchers.hasSize(trainDto.getPlaceCount()));
+                .body(Matchers.equalTo("false"));
     }
 
     @Test
-    public void testDeleteAll() {
-        ticketPlaceRepository.insert(tickets);
+    public void testPayOk() {
+        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
+        Train train = Train.builder().tickets(ticketsByRepo).build();
+        TrainElastic trainElastic = TrainElastic.builder().tickets(ticketsByRepo).build();
+        Train trainByRepo = trainRepository.save(train);
+        TrainElastic trainElasticRepo = trainSearchRepository.save(trainElastic);
+
+        String id = ticketsByRepo.get(0).getId();
+
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .when()
-                .delete("/all")
+                .put("/buy/{id}", id)
                 .then()
                 .statusCode(HttpStatus.NO_CONTENT.value());
-        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.findAll();
-        Assertions.assertEquals(ticketsByRepo.size(), 0);
-    }
 
-    @Test
-    public void testDeleteById() {
         RestAssured.given()
                 .contentType(ContentType.JSON)
+                .body(tickets.get(0))
+                .param("money", 5000.0)
                 .when()
-                .delete("/{id}", "test")
+                .put("/pay/{id}", id)
                 .then()
-                .statusCode(HttpStatus.NO_CONTENT.value());
+                .statusCode(HttpStatus.CREATED.value())
+                .body(Matchers.equalTo("true"));
     }
-
 
 }
 

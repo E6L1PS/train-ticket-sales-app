@@ -11,8 +11,6 @@ import ru.mai.trainticketsalesapp.model.Station;
 import ru.mai.trainticketsalesapp.repository.RouteRepository;
 import ru.mai.trainticketsalesapp.repository.StationRepository;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class RouteService {
@@ -33,8 +31,8 @@ public class RouteService {
                 .build());
     }
 
-    public Route createRoute(List<Station> stations) {
-        return routeRepository.save(Route.builder().numberRoute("#").stations(stations).build());
+    public Route createRoute(Route route) {
+        return routeRepository.save(route);
     }
 
 

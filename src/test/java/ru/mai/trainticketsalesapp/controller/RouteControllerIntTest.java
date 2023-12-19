@@ -48,33 +48,18 @@ public class RouteControllerIntTest {
                     .withEnv("ES_JAVA_OPTS", "-Xmx256m -Xms256m");
     @Autowired
     RouteRepository routeRepository;
+    List<Station> stations;
+    Route route;
+    List<Route> routes;
 
     @BeforeEach
     void setup() {
-        RestAssured.baseURI = "http://localhost:" + port;
-        routeRepository.deleteAll();
-    }
-
-
-    @Test
-    public void testEmptyGetAll() {
-        RestAssured.given()
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/api/v1/route")
-                .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("content", Matchers.hasSize(0));
-
-    }
-
-    @Test
-    public void testNotEmptyGetAll() {
-        List<Station> stations = List.of(
+        stations = List.of(
                 Station.builder().name("A").build(),
                 Station.builder().name("B").build()
         );
-        List<Route> routes = List.of(
+
+        routes = List.of(
                 Route.builder()
                         .stations(stations)
                         .numberRoute("#1")
@@ -84,12 +69,38 @@ public class RouteControllerIntTest {
                         .numberRoute("#2")
                         .build()
         );
+
+        route = Route.builder()
+                .stations(stations)
+                .numberRoute("#1")
+                .build();
+
+        String endPoint = "/api/v1/route";
+        RestAssured.baseURI = "http://localhost:" + port + endPoint;
+        routeRepository.deleteAll();
+    }
+
+
+    @Test
+    public void testEmptyGetAll() {
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("content", Matchers.hasSize(0));
+
+    }
+
+    @Test
+    public void testNotEmptyGetAll() {
         routeRepository.saveAll(routes);
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/v1/route")
+                .get()
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("content", Matchers.hasSize(2));
@@ -102,34 +113,40 @@ public class RouteControllerIntTest {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/v1/route/{id}", id)
+                .get("/{id}", id)
                 .then()
-                .statusCode(HttpStatus.NOT_FOUND.value());
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("message", Matchers.containsString("not found"));
     }
 
-//    @Test
-//    public void testNotEmptyGetById() throws JsonProcessingException {
-//        List<Station> stations = List.of(
-//                Station.builder().name("A").build(),
-//                Station.builder().name("B").build()
-//        );
-//        Route route = routeRepository.save(Route.builder()
-//                .stations(stations)
-//                .numberRoute("#1")
-//                .build());
-//
-//        RestAssured.given()
-//                .contentType(ContentType.JSON)
-//                .when()
-//                .get("/api/v1/route/{id}", route.getId())
-//                .then()
-//                .statusCode(HttpStatus.OK.value())
-//                .body(Matchers.contains(
-//                        new ObjectMapper()
-//                                .writer()
-//                                .withDefaultPrettyPrinter()
-//                                .writeValueAsString(route)));
-//    }
+
+    @Test
+    public void testNotEmptyGetById() {
+        Route routeByRepo = routeRepository.save(route);
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/{id}", routeByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", Matchers.equalTo(routeByRepo.getId()))
+                .body("numberRoute", Matchers.equalTo(routeByRepo.getNumberRoute()))
+                .body("stations", Matchers.hasSize(2));
+    }
+
+    @Test
+    public void testCreate() {
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(route)
+                .when()
+                .post()
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("id", Matchers.notNullValue())
+                .body("stations", Matchers.hasSize(2));
+    }
 
 }
 

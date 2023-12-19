@@ -17,7 +17,10 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import ru.mai.trainticketsalesapp.model.Station;
 import ru.mai.trainticketsalesapp.repository.StationRepository;
+
+import java.util.List;
 
 @Testcontainers
 @TestConfiguration(proxyBeanMethods = false)
@@ -44,10 +47,20 @@ public class StationControllerIntTest {
                     .withEnv("ES_JAVA_OPTS", "-Xmx256m -Xms256m");
     @Autowired
     StationRepository stationRepository;
+    Station station;
+    List<Station> stations;
 
     @BeforeEach
     void setup() {
-        RestAssured.baseURI = "http://localhost:" + port;
+        station = Station.builder().name("ABC").build();
+
+        stations = List.of(
+                Station.builder().name("A").build(),
+                Station.builder().name("B").build()
+        );
+
+        String endPoint = "/api/v1/station";
+        RestAssured.baseURI = "http://localhost:" + port + endPoint;
         stationRepository.deleteAll();
     }
 
@@ -57,29 +70,36 @@ public class StationControllerIntTest {
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/v1/station")
+                .get()
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("content", Matchers.hasSize(0));
     }
 
-//    @Test
-//    public void testNotEmptyGetAll() {
-//        List<Station> stations = List.of(
-//                Station.builder().name("A").build(),
-//                Station.builder().name("B").build()
-//        );
-//        stationRepository.saveAll(stations);
-//
-//        RestAssured.given()
-//                .contentType(ContentType.JSON)
-//                .when()
-//                .get("/api/v1/route")
-//                .then()
-//                .statusCode(HttpStatus.OK.value())
-//                .body("content", Matchers.hasSize(2));
-//    }
+    @Test
+    public void testNotEmptyGetAll() {
+        stationRepository.saveAll(stations);
 
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("content", Matchers.hasSize(2));
+    }
+
+    @Test
+    public void testCreate() {
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(station)
+                .when()
+                .post()
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("name", Matchers.equalTo(station.getName()));
+    }
 
 }
 

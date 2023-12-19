@@ -3,6 +3,7 @@ package ru.mai.trainticketsalesapp.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.mai.trainticketsalesapp.model.Station;
 import ru.mai.trainticketsalesapp.service.RouteService;
@@ -23,8 +24,9 @@ public class StationController {
     }
 
     @PostMapping
-    public Station addStation(@RequestBody Station stationDto) {
-        return routeService.createStation(stationDto);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Station addStation(@RequestBody Station station) {
+        return routeService.createStation(station);
     }
 
 }

@@ -3,12 +3,10 @@ package ru.mai.trainticketsalesapp.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.mai.trainticketsalesapp.model.Route;
-import ru.mai.trainticketsalesapp.model.Station;
 import ru.mai.trainticketsalesapp.service.RouteService;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/route")
@@ -30,8 +28,9 @@ public class RouteController {
     }
 
     @PostMapping
-    public Route addRoute(@RequestBody List<Station> routes) {
-        return routeService.createRoute(routes);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Route addRoute(@RequestBody Route route) {
+        return routeService.createRoute(route);
     }
 
 

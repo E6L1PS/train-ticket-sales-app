@@ -40,6 +40,10 @@ public class TrainService {
     private final ElasticsearchOperations elasticsearchOperations;
 
 
+    public Page<TrainElastic> findAll(Pageable pageable) {
+        return trainSearchRepository.findAll(pageable);
+    }
+
     public List<TrainElastic> search(String departureDate, PageRequest pageRequest) {
         Query searchQuery = NativeQuery.builder()
                 .withFilter(q -> q.match(m -> m.field("departureDate").query(departureDate)))
@@ -56,26 +60,7 @@ public class TrainService {
         return trainMatches;
     }
 
-    public Page<TrainElastic> findAll(Pageable pageable) {
-        return trainSearchRepository.findAll(pageable);
-    }
-
-    public Long countTrains() {
-        return trainRepository.count();
-    }
-
-    public Long countTrainsElastic() {
-        return trainSearchRepository.count();
-    }
-
-    public Page<TrainElastic> searchTrainsByDate(String departureStation, String destinationStation, String departureDate, PageRequest pageRequest) {
-        //findAvailableTrains(departureStation, destinationStation, LocalDate.of(2024, 1, 24), pageRequest);
-        return trainSearchRepository.findByDepartureDateEquals(LocalDate.of(2024, 1, 24), pageRequest);
-    }
-
-
     public Page<TrainElastic> searchTrainsByDateAndStations(String departureStation, String destinationStation, LocalDate departureDate, PageRequest pageRequest) {
-        //findAvailableTrains(departureStation, destinationStation, LocalDate.of(2024, 1, 24), pageRequest);
         return trainSearchRepository
                 .findByRoute_Stations_NameEqualsIgnoreCaseAndRoute_Stations_NameEqualsIgnoreCaseAndDepartureDateEqualsAndTickets_IsFreePlaceTrue(
                         departureStation,

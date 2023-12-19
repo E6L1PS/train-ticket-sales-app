@@ -3,8 +3,8 @@ package ru.mai.trainticketsalesapp.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.mai.trainticketsalesapp.dto.CountTrains;
 import ru.mai.trainticketsalesapp.dto.TrainDto;
 import ru.mai.trainticketsalesapp.mapper.TrainMapper;
 import ru.mai.trainticketsalesapp.model.Train;
@@ -20,7 +20,6 @@ import java.util.List;
 public class TrainController {
 
     private final TrainService trainService;
-    private final TrainMapper trainMapper;
 
     @GetMapping("/s")
     public Page<TrainElastic> searchTrains(
@@ -60,35 +59,32 @@ public class TrainController {
         return trainService.findAll(PageRequest.of(page, size));
     }
 
-    @GetMapping("/count")
-    public CountTrains getCountTrains() {
-        return CountTrains.builder()
-                .mongo(trainService.countTrains())
-                .elastic(trainService.countTrainsElastic())
-                .build();
-    }
-
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Train addTrain(@RequestBody TrainDto trainDto) {
         return trainService.createTrain(trainDto);
     }
 
     @PostMapping("/generate/{numberTrains}")
+    @ResponseStatus(HttpStatus.CREATED)
     public void generateTrains(@PathVariable Long numberTrains) {
         trainService.generateAndSaveTrains(numberTrains);
     }
 
     @PutMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Train updateTrain(@RequestBody TrainDto trainDto) {
         return trainService.createTrain(trainDto);
     }
 
-    @DeleteMapping
-    public void deleteTrain(@RequestBody String id) {
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTrainById(@PathVariable String id) {
         trainService.deleteTrain(id);
     }
 
     @DeleteMapping("/all")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAll() {
         trainService.deleteAll();
     }
