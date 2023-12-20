@@ -1,5 +1,7 @@
 package ru.mai.trainticketsalesapp.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.github.javafaker.Faker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,18 +15,22 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import ru.mai.trainticketsalesapp.dto.TrainDto;
+import ru.mai.trainticketsalesapp.exception.NotFoundException;
 import ru.mai.trainticketsalesapp.model.*;
 import ru.mai.trainticketsalesapp.repository.RouteRepository;
 import ru.mai.trainticketsalesapp.repository.TicketPlaceRepository;
 import ru.mai.trainticketsalesapp.repository.TrainRepository;
 import ru.mai.trainticketsalesapp.repository.TrainSearchRepository;
+import ru.mai.trainticketsalesapp.util.ElasticSearchUtil;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -38,10 +44,23 @@ public class TrainService {
     private final TicketPlaceRepository ticketPlaceRepository;
     private final TrainSearchRepository trainSearchRepository;
     private final ElasticsearchOperations elasticsearchOperations;
-
+    private final ElasticsearchClient elasticsearchClient;
 
     public Page<TrainElastic> findAll(Pageable pageable) {
         return trainSearchRepository.findAll(pageable);
+    }
+
+    public TrainElastic findById(String id) {
+        return trainSearchRepository.findById(id).orElseThrow(() -> new NotFoundException("Train " + id + " not found."));
+    }
+
+    public SearchResponse<TrainElastic> fuzzySearch(String approximateDepartureStation) throws IOException {
+        Supplier<co.elastic.clients.elasticsearch._types.query_dsl.Query> supplier =
+                ElasticSearchUtil.createSupplierQuery(approximateDepartureStation);
+        SearchResponse<TrainElastic> response = elasticsearchClient
+                .search(s -> s.index("trains").query(supplier.get()), TrainElastic.class);
+        log.info("elasticsearch supplier fuzzy query " + supplier.get().toString());
+        return response;
     }
 
     public List<TrainElastic> search(String departureDate, PageRequest pageRequest) {
@@ -60,16 +79,16 @@ public class TrainService {
         return trainMatches;
     }
 
-    public Page<TrainElastic> searchTrainsByDateAndStations(String departureStation, String destinationStation, LocalDate departureDate, PageRequest pageRequest) {
+    public Page<TrainElastic> searchTrainsByDateAndStations(Boolean isFreePlace, String departureStation, String destinationStation, LocalDate departureDate, PageRequest pageRequest) {
         return trainSearchRepository
-                .findByRoute_Stations_NameEqualsIgnoreCaseAndRoute_Stations_NameEqualsIgnoreCaseAndDepartureDateEqualsAndTickets_IsFreePlaceTrue(
+                .findByTickets_IsFreePlaceEqualsAndDepartureDateEqualsAndRoute_Stations_NameEqualsIgnoreCaseAndRoute_Stations_NameEqualsIgnoreCase (
+                        isFreePlace,
+                        departureDate,
                         departureStation,
                         destinationStation,
-                        departureDate,
                         pageRequest
                 );
     }
-
 
     public void generateAndSaveTrains(Long NUMBER_OF_TRAINS_TO_GENERATE) {
         for (int i = 0; i < NUMBER_OF_TRAINS_TO_GENERATE; i++) {
@@ -104,7 +123,7 @@ public class TrainService {
                 .build();
     }
 
-    public Train createTrain(TrainDto trainDto) {
+    public TrainElastic createTrain(TrainDto trainDto) {
         Integer placeCount = trainDto.getPlaceCount();
         List<TicketPlace> tickets = ticketPlaceRepository.insert(IntStream.range(1, placeCount + 1)
                 .mapToObj(i -> TicketPlace.builder()
@@ -136,11 +155,9 @@ public class TrainService {
 
         log.info(trainElastic.getId());
 
-        trainSearchRepository.save(trainElastic);
 
-        return train;
+        return trainSearchRepository.save(trainElastic);
     }
-
 
     public void deleteTrain(String id) {
         trainRepository.deleteById(id);
@@ -154,5 +171,15 @@ public class TrainService {
         trainSearchRepository.deleteAll();
     }
 
+    public TrainElastic updateTrain(Train train) {
+        trainRepository.save(train);
+        TrainElastic trainElastic = TrainElastic.builder()
+                .id(train.getId())
+                .departureDate(train.getDepartureDate())
+                .placeCount(train.getPlaceCount())
+                .route(train.getRoute())
+                .tickets(train.getTickets())
+                .build();
+        return trainSearchRepository.save(trainElastic);
+    }
 }
-

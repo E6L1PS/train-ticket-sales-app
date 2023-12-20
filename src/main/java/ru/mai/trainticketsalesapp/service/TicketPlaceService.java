@@ -17,7 +17,6 @@ import ru.mai.trainticketsalesapp.repository.TrainSearchRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -46,8 +45,8 @@ public class TicketPlaceService {
     }
 
     public List<TicketPlace> getTicketsByTrainId(String trainId) {
-        Optional<Train> train = trainRepository.findById(trainId);
-        return train.map(ticketPlaceRepository::findAllByTrain).orElseThrow(() -> new NotFoundException("Train " + trainId + " not found"));
+        Train train = trainRepository.findById(trainId).orElseThrow(() -> new NotFoundException("Train " + trainId + " not found"));
+        return train.getTickets();
     }
 
     public TicketPlace createTicket(TicketPlace ticketBody) {
@@ -114,4 +113,11 @@ public class TicketPlaceService {
         redisTemplate.delete(lockKey);
     }
 
+    public void deleteTicket(String id) {
+        ticketPlaceRepository.deleteById(id);
+        TrainElastic train = trainSearchRepository.findByTickets_IdEquals(id)
+                .orElseThrow(() -> new NotFoundException("Ticket not found"));
+        train.getTickets().removeIf(ticket -> ticket.getId().equals(id));
+        trainSearchRepository.save(train);
+    }
 }

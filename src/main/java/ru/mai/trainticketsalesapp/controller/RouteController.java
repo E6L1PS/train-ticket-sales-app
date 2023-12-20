@@ -23,7 +23,7 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
-    public Route getRoute(@PathVariable String id) {
+    public Route getRouteById(@PathVariable String id) {
         return routeService.getById(id);
     }
 
@@ -31,6 +31,12 @@ public class RouteController {
     @ResponseStatus(HttpStatus.CREATED)
     public Route addRoute(@RequestBody Route route) {
         return routeService.createRoute(route);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRouteById(@PathVariable String id) {
+        routeService.deleteRoute(id);
     }
 
 

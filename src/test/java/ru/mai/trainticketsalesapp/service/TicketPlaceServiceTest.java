@@ -96,12 +96,6 @@ class TicketPlaceServiceTest {
                 trains.stream().filter(train -> train.getId().equals("0")).findFirst()
         );
 
-        Mockito.when(
-                ticketPlaceRepository.findAllByTrain(Mockito.any(Train.class))
-        ).thenReturn(
-                tickets.subList(0, 2)
-        );
-
         List<TicketPlace> result = ticketPlaceService.getTicketsByTrainId("0");
 
         Assertions.assertEquals(2, result.size());

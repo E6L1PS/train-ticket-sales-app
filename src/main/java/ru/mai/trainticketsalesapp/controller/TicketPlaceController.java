@@ -41,7 +41,6 @@ public class TicketPlaceController {
         return ticketPlaceService.createTicket(ticketPlace);
     }
 
-
     @PutMapping("/buy/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void buyTicket(@PathVariable String id) {
@@ -54,4 +53,9 @@ public class TicketPlaceController {
         return ticketPlaceService.payTicket(id, money);
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTicketById(@PathVariable String id) {
+        ticketPlaceService.deleteTicket(id);
+    }
 }

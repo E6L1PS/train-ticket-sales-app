@@ -160,14 +160,15 @@ public class TrainControllerIntTest {
                 .route(route)
                 .departureDate(LocalDate.now())
                 .build();
+
         trainSearchRepository.save(trainElastic);
 
         RestAssured.given()
                 .contentType(ContentType.JSON)
                 .param("departureStation", "A")
                 .param("destinationStation", "B")
-                .param("departureDateMonth", 12)
-                .param("departureDateDay", 19)
+                .param("departureDateMonth", LocalDate.now().getMonthValue())
+                .param("departureDateDay", LocalDate.now().getDayOfMonth())
                 .when()
                 .get("/s")
                 .then()
@@ -208,15 +209,24 @@ public class TrainControllerIntTest {
 
     @Test
     public void testUpdate() {
+        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
+        Route routeByRepo = routeRepository.save(route);
+        Train trainByRepo = trainRepository.save(
+                Train.builder()
+                        .placeCount(20)
+                        .route(routeByRepo)
+                        .tickets(ticketsByRepo)
+                        .build());
+        trainByRepo.setPlaceCount(10);
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(trainDto)
+                .body(trainByRepo)
                 .when()
                 .put()
                 .then()
                 .statusCode(HttpStatus.CREATED.value())
                 .body("id", Matchers.notNullValue())
-                .body("tickets", Matchers.hasSize(trainDto.getPlaceCount()));
+                .body("placeCount", Matchers.equalTo(trainByRepo.getPlaceCount()));
     }
 
     @Test

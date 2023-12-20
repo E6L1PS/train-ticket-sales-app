@@ -179,19 +179,19 @@ public class TicketPlaceControllerIntTest {
     }
 
 
-//    @Test
-//    public void testNotEmptyGetByTrainId() {
-//        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
-//        Train trainByRepo = trainRepository.save(Train.builder().tickets(ticketsByRepo).build());
-//
-//        RestAssured.given()
-//                .contentType(ContentType.JSON)
-//                .when()
-//                .get("/{id}", trainByRepo.getId())
-//                .then()
-//                .statusCode(HttpStatus.OK.value())
-//                .body("content", Matchers.hasSize(ticketsByRepo.size()));
-//    }
+    @Test
+    public void testNotEmptyGetByTrainId() {
+        List<TicketPlace> ticketsByRepo = ticketPlaceRepository.insert(tickets);
+        Train trainByRepo = trainRepository.save(Train.builder().tickets(ticketsByRepo).build());
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/train/{id}", trainByRepo.getId())
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("content", Matchers.hasSize(ticketsByRepo.size()));
+    }
 
     @Test
     public void testCreate() {

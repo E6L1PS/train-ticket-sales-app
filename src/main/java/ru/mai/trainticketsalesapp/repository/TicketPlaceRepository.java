@@ -10,10 +10,4 @@ import java.util.List;
 
 @Repository
 public interface TicketPlaceRepository extends MongoRepository<TicketPlace, String> {
-    @Query("{'train':  ?0}")
-    List<TicketPlace> findAllByTrain(Train train);
-
-
-    @Query("{'id': ?0}")
-    void updateIsFreePlace(String ticketId, boolean isFreePlace);
 }
