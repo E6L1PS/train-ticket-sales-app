@@ -40,15 +40,15 @@ public class TicketPlaceControllerIntTest {
 
     @Container
     @ServiceConnection
-    private static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:latest"));
+    private static final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:latest"));
 
     @Container
     @ServiceConnection
-    private static RedisContainer redisContainer = new RedisContainer(DockerImageName.parse("redis:latest"));
+    private static final RedisContainer redisContainer = new RedisContainer(DockerImageName.parse("redis:latest"));
 
     @Container
     @ServiceConnection
-    private static ElasticsearchContainer elasticsearchContainer =
+    private static final ElasticsearchContainer elasticsearchContainer =
             new ElasticsearchContainer(DockerImageName.parse("elasticsearch:8.10.2"))
                     .withEnv("xpack.security.enabled", "false")
                     .withEnv("http.cors.enabled", "true")

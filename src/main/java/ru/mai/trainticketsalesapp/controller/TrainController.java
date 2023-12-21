@@ -1,7 +1,5 @@
 package ru.mai.trainticketsalesapp.controller;
 
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,10 +10,7 @@ import ru.mai.trainticketsalesapp.model.Train;
 import ru.mai.trainticketsalesapp.model.TrainElastic;
 import ru.mai.trainticketsalesapp.service.TrainService;
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/train")
@@ -37,17 +32,6 @@ public class TrainController {
         return trainService.findById(id);
     }
 
-    @GetMapping("/fuzzySearch/{approximateDepartureStation}")
-    public List<TrainElastic> fuzzySearch(@PathVariable String approximateDepartureStation) throws IOException {
-        SearchResponse<TrainElastic> searchResponse = trainService.fuzzySearch(approximateDepartureStation);
-        List<Hit<TrainElastic>> hitList = searchResponse.hits().hits();
-        List<TrainElastic> trains = new ArrayList<>();
-        for (Hit<TrainElastic> hit : hitList) {
-            trains.add(hit.source());
-        }
-        return trains;
-    }
-
     @GetMapping("/s")
     public Page<TrainElastic> searchTrains(
             @RequestParam(required = false, defaultValue = "true") Boolean isFreePlace,
@@ -59,7 +43,7 @@ public class TrainController {
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "5") Integer size
     ) {
-        return trainService.searchTrainsByDateAndStations(
+        return trainService.search(
                 isFreePlace,
                 departureStation,
                 destinationStation,
@@ -69,15 +53,6 @@ public class TrainController {
                         departureDateDay
                 ),
                 PageRequest.of(page, size));
-    }
-
-    @GetMapping("/s/date")
-    public List<TrainElastic> searchTrains(
-            @RequestParam(required = false) String departureDate,
-            @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "5") Integer size
-    ) {
-        return trainService.search(departureDate, PageRequest.of(page, size));
     }
 
     @PostMapping
